@@ -1,0 +1,143 @@
+version: '3.8'
+
+services:
+  # MetaPilot AI Backend
+  metapilot-backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: metapilot-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Application data
+      - ./data:/data
+      # Model files
+      - ./models:/models
+      # Logs
+      - ./logs:/logs
+      # Cache
+      - ./cache:/cache
+      # Plugins
+      - ./plugins:/plugins
+      # Knowledge base
+      - ./knowledge:/knowledge
+      # Configuration
+      - ./.env:/app/.env:ro
+    environment:
+      - METAPILOT_ENV=production
+      - METAPILOT_HOST=0.0.0.0
+      - METAPILOT_PORT=8000
+      - METAPILOT_LOG_LEVEL=INFO
+      - METAPILOT_DATA_DIR=/data
+      - METAPILOT_MODELS_DIR=/models
+      - METAPILOT_LOGS_DIR=/logs
+      - METAPILOT_CACHE_DIR=/cache
+      - METAPILOT_PLUGINS_DIR=/plugins
+      - METAPILOT_KNOWLEDGE_DIR=/knowledge
+    networks:
+      - metapilot-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health').raise_for_status()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: 2
+        reservations:
+          memory: 2G
+          cpus: 0.5
+
+  # MetaPilot AI Frontend (optional - for production)
+  metapilot-frontend:
+    image: node:18-alpine
+    container_name: metapilot-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://metapilot-backend:8000
+      - VITE_WS_URL=ws://metapilot-backend:8000
+    depends_on:
+      metapilot-backend:
+        condition: service_healthy
+    networks:
+      - metapilot-network
+    profiles:
+      - frontend
+
+  # Redis for caching and session storage (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: metapilot-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data
+    command: redis-server --appendonly yes
+    networks:
+      - metapilot-network
+    profiles:
+      - redis
+
+  # PostgreSQL for database (optional)
+  postgres:
+    image: postgres:15-alpine
+    container_name: metapilot-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=metapilot
+      - POSTGRES_USER=metapilot
+      - POSTGRES_PASSWORD=metapilot
+    networks:
+      - metapilot-network
+    profiles:
+      - postgres
+
+  # Nginx reverse proxy (optional - for production)
+  nginx:
+    image: nginx:alpine
+    container_name: metapilot-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      metapilot-backend:
+        condition: service_healthy
+    networks:
+      - metapilot-network
+    profiles:
+      - nginx
+
+networks:
+  metapilot-network:
+    driver: bridge
+    name: metapilot-network
+
+volumes:
+  metapilot-data:
+    driver: local
+  metapilot-models:
+    driver: local
+  metapilot-logs:
+    driver: local
