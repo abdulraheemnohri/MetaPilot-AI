@@ -1,232 +1,222 @@
-"""
-MetaPilot AI - UI Store
-
-UI-related state that doesn't belong in other stores.
-"""
+// UI store for MetaPilot AI
+// Zustand store for UI state management
 
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
-
-interface ModalState {
-  isOpen: boolean;
-  type: string | null;
-  data?: any;
-}
-
-interface Toast {
-  id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
-  title: string;
-  message: string;
-  duration?: number;
-  createdAt: number;
-}
-
-interface ConfirmationDialog {
-  isOpen: boolean;
-  title: string;
-  message: string;
-  confirmText?: string;
-  cancelText?: string;
-  onConfirm?: () => void;
-  onCancel?: () => void;
-}
+import { persist } from 'zustand/middleware';
 
 interface UiState {
-  // Modals
-  modals: ModalState[];
+  // Sidebar
+  sidebarOpen: boolean;
+  sidebarCollapsed: boolean;
   
-  // Toasts
-  toasts: Toast[];
+  // Theme
+  theme: 'light' | 'dark' | 'system';
   
-  // Confirmation dialog
-  confirmationDialog: ConfirmationDialog;
+  // Language
+  language: string;
   
-  // Context menu
-  contextMenu: {
-    isOpen: boolean;
-    x: number;
-    y: number;
-    items: any[];
-  };
+  // Modal states
+  isModalOpen: boolean;
+  modalContent: React.ReactNode | null;
   
-  // Fullscreen
-  isFullscreen: boolean;
-  fullscreenElement: string | null;
+  // Loading states
+  isLoading: boolean;
+  loadingMessage: string | null;
   
-  // Actions
-  openModal: (type: string, data?: any) => void;
-  closeModal: (type?: string) => void;
-  closeAllModals: () => void;
+  // Search
+  searchQuery: string;
+  searchOpen: boolean;
   
-  addToast: (toast: Omit<Toast, 'id' | 'createdAt'>) => string;
-  removeToast: (id: string) => void;
-  clearToasts: () => void;
+  // Notifications
+  notificationsOpen: boolean;
   
-  openConfirmationDialog: (
-    title: string,
-    message: string,
-    onConfirm?: () => void,
-    onCancel?: () => void,
-    confirmText?: string,
-    cancelText?: string
-  ) => void;
-  closeConfirmationDialog: () => void;
+  // Settings drawer
+  settingsOpen: boolean;
   
-  openContextMenu: (x: number, y: number, items: any[]) => void;
-  closeContextMenu: () => void;
+  // Current page title
+  pageTitle: string;
+}
+
+interface UiActions {
+  // Sidebar actions
+  setSidebarOpen: (open: boolean) => void;
+  toggleSidebarOpen: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  toggleSidebarCollapsed: () => void;
   
-  setFullscreen: (isFullscreen: boolean, element?: string | null) => void;
+  // Theme actions
+  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  toggleTheme: () => void;
   
+  // Language actions
+  setLanguage: (language: string) => void;
+  
+  // Modal actions
+  openModal: (content: React.ReactNode) => void;
+  closeModal: () => void;
+  
+  // Loading actions
+  setLoading: (isLoading: boolean, message?: string) => void;
+  
+  // Search actions
+  setSearchQuery: (query: string) => void;
+  setSearchOpen: (open: boolean) => void;
+  toggleSearchOpen: () => void;
+  
+  // Notifications actions
+  setNotificationsOpen: (open: boolean) => void;
+  toggleNotificationsOpen: () => void;
+  
+  // Settings drawer actions
+  setSettingsOpen: (open: boolean) => void;
+  toggleSettingsOpen: () => void;
+  
+  // Page title actions
+  setPageTitle: (title: string) => void;
+  
+  // Reset UI state
   reset: () => void;
 }
 
-const initialState = {
-  modals: [],
-  toasts: [],
-  confirmationDialog: {
-    isOpen: false,
-    title: '',
-    message: '',
-    onConfirm: undefined,
-    onCancel: undefined,
-  },
-  contextMenu: {
-    isOpen: false,
-    x: 0,
-    y: 0,
-    items: [],
-  },
-  isFullscreen: false,
-  fullscreenElement: null,
+type UiStore = UiState & UiActions;
+
+// Initial state
+const initialState: UiState = {
+  sidebarOpen: false,
+  sidebarCollapsed: false,
+  theme: 'system',
+  language: 'en',
+  isModalOpen: false,
+  modalContent: null,
+  isLoading: false,
+  loadingMessage: null,
+  searchQuery: '',
+  searchOpen: false,
+  notificationsOpen: false,
+  settingsOpen: false,
+  pageTitle: 'MetaPilot AI',
 };
 
-let toastId = 0;
-
-export const useUiStore = create<UiState>()(
-  devtools(
+export const useUiStore = create<UiStore>()(
+  persist(
     (set, get) => ({
+      // State
       ...initialState,
-      
-      openModal: (type, data) =>
-        set((state) => ({
-          modals: [...state.modals, { isOpen: true, type, data }],
-        })),
-      
-      closeModal: (type) =>
-        set((state) => ({
-          modals: type 
-            ? state.modals.filter((m) => m.type !== type)
-            : state.modals.filter((m) => !m.isOpen),
-        })),
-      
-      closeAllModals: () =>
-        set({ modals: [] }),
-      
-      addToast: (toast) => {
-        const id = String(++toastId);
-        set((state) => ({
-          toasts: [
-            ...state.toasts,
-            {
-              id,
-              createdAt: Date.now(),
-              duration: toast.duration || 5000,
-              ...toast,
-            },
-          ],
-        }));
-        return id;
+
+      // Sidebar actions
+      setSidebarOpen: (open: boolean) => {
+        set({ sidebarOpen: open });
       },
       
-      removeToast: (id) =>
-        set((state) => ({
-          toasts: state.toasts.filter((t) => t.id !== id),
-        })),
+      toggleSidebarOpen: () => {
+        set((state) => ({ sidebarOpen: !state.sidebarOpen }));
+      },
       
-      clearToasts: () =>
-        set({ toasts: [] }),
+      setSidebarCollapsed: (collapsed: boolean) => {
+        set({ sidebarCollapsed: collapsed });
+      },
       
-      openConfirmationDialog: (title, message, onConfirm, onCancel, confirmText, cancelText) =>
+      toggleSidebarCollapsed: () => {
+        set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed }));
+      },
+
+      // Theme actions
+      setTheme: (theme: 'light' | 'dark' | 'system') => {
+        set({ theme });
+        // Update document class for theme
+        document.documentElement.classList.remove('light', 'dark');
+        if (theme !== 'system') {
+          document.documentElement.classList.add(theme);
+        }
+      },
+      
+      toggleTheme: () => {
+        const currentTheme = get().theme;
+        const themes: ('light' | 'dark' | 'system')[] = ['light', 'dark', 'system'];
+        const nextIndex = (themes.indexOf(currentTheme) + 1) % themes.length;
+        get().setTheme(themes[nextIndex]);
+      },
+
+      // Language actions
+      setLanguage: (language: string) => {
+        set({ language });
+      },
+
+      // Modal actions
+      openModal: (content: React.ReactNode) => {
         set({
-          confirmationDialog: {
-            isOpen: true,
-            title,
-            message,
-            onConfirm,
-            onCancel,
-            confirmText: confirmText || 'Confirm',
-            cancelText: cancelText || 'Cancel',
-          },
-        }),
+          isModalOpen: true,
+          modalContent: content,
+        });
+      },
       
-      closeConfirmationDialog: () =>
+      closeModal: () => {
         set({
-          confirmationDialog: {
-            isOpen: false,
-            title: '',
-            message: '',
-            onConfirm: undefined,
-            onCancel: undefined,
-          },
-        }),
-      
-      openContextMenu: (x, y, items) =>
+          isModalOpen: false,
+          modalContent: null,
+        });
+      },
+
+      // Loading actions
+      setLoading: (isLoading: boolean, message?: string) => {
         set({
-          contextMenu: {
-            isOpen: true,
-            x,
-            y,
-            items,
-          },
-        }),
+          isLoading,
+          loadingMessage: message || null,
+        });
+      },
+
+      // Search actions
+      setSearchQuery: (query: string) => {
+        set({ searchQuery: query });
+      },
       
-      closeContextMenu: () =>
-        set({
-          contextMenu: {
-            isOpen: false,
-            x: 0,
-            y: 0,
-            items: [],
-          },
-        }),
+      setSearchOpen: (open: boolean) => {
+        set({ searchOpen: open });
+      },
       
-      setFullscreen: (isFullscreen, element) =>
-        set({ isFullscreen, fullscreenElement: element }),
+      toggleSearchOpen: () => {
+        set((state) => ({ searchOpen: !state.searchOpen }));
+      },
+
+      // Notifications actions
+      setNotificationsOpen: (open: boolean) => {
+        set({ notificationsOpen: open });
+      },
       
-      reset: () => set(initialState),
+      toggleNotificationsOpen: () => {
+        set((state) => ({ notificationsOpen: !state.notificationsOpen }));
+      },
+
+      // Settings drawer actions
+      setSettingsOpen: (open: boolean) => {
+        set({ settingsOpen: open });
+      },
+      
+      toggleSettingsOpen: () => {
+        set((state) => ({ settingsOpen: !state.settingsOpen }));
+      },
+
+      // Page title actions
+      setPageTitle: (title: string) => {
+        set({ pageTitle: title });
+        document.title = title;
+      },
+
+      // Reset UI state
+      reset: () => {
+        set(initialState);
+      },
     }),
-    { name: 'UiStore' }
+    {
+      name: 'metapilot-ui-storage',
+      partialize: (state) => ({
+        // Only persist these settings
+        theme: state.theme,
+        language: state.language,
+        sidebarCollapsed: state.sidebarCollapsed,
+      }),
+    }
   )
 );
 
-// Selector hooks
-export const useModals = () => useUiStore((state) => state.modals);
-export const useToasts = () => useUiStore((state) => state.toasts);
-export const useConfirmationDialog = () => useUiStore((state) => state.confirmationDialog);
-export const useContextMenu = () => useUiStore((state) => state.contextMenu);
-export const useIsFullscreen = () => useUiStore((state) => state.isFullscreen);
-export const useFullscreenElement = () => useUiStore((state) => state.fullscreenElement);
-
-// Helper hooks
-export const useIsModalOpen = (type: string) => 
-  useUiStore((state) => 
-    state.modals.some((m) => m.type === type && m.isOpen)
-  );
-
-export const useModalData = <T>(type: string) => 
-  useUiStore((state) => 
-    state.modals.find((m) => m.type === type && m.isOpen)?.data as T | undefined
-  );
-
-export const useIsContextMenuOpen = () => 
-  useUiStore((state) => state.contextMenu.isOpen);
-
-export const useContextMenuPosition = () => 
-  useUiStore((state) => ({
-    x: state.contextMenu.x,
-    y: state.contextMenu.y,
-  }));
-
-export const useContextMenuItems = () => 
-  useUiStore((state) => state.contextMenu.items);
+export default useUiStore;
