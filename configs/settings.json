@@ -1,0 +1,191 @@
+{
+  "application": {
+    "name": "MetaPilot AI",
+    "version": "1.0.0",
+    "description": "One Request. Multiple AI Systems. One Intelligent Result.",
+    "author": "Abdulraheem Nohari",
+    "environment": "development"
+  },
+  
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8000,
+    "debug": true,
+    "reload": true,
+    "workers": 4,
+    "timeout": 300,
+    "max_request_size": "100mb",
+    "cors_origins": ["http://localhost:3000", "http://127.0.0.1:3000"]
+  },
+  
+  "database": {
+    "type": "sqlite",
+    "path": "data/metapilot.db",
+    "pool_size": 20,
+    "max_overflow": 10,
+    "echo": false
+  },
+  
+  "logging": {
+    "level": "INFO",
+    "format": "json",
+    "include_timestamp": true,
+    "log_file": "logs/metapilot.log",
+    "max_file_size": "10MB",
+    "backup_count": 5
+  },
+  
+  "security": {
+    "secret_key": "generate-a-secure-random-key-in-production",
+    "encryption_key": "generate-a-secure-encryption-key",
+    "session_timeout": 3600,
+    "token_expiry": 86400,
+    "rate_limit": 100,
+    "max_file_upload_size": 10485760
+  },
+  
+  "ai": {
+    "default_provider": "local",
+    "default_model": "",
+    "temperature": 0.7,
+    "max_tokens": 2000,
+    "top_p": 1.0,
+    "frequency_penalty": 0.0,
+    "presence_penalty": 0.0,
+    "timeout": 120,
+    "max_retries": 3,
+    "parallel_execution": true,
+    "max_parallel_tasks": 4
+  },
+  
+  "local_ai": {
+    "enabled": true,
+    "models_dir": "models",
+    "gguf_enabled": true,
+    "onnx_enabled": true,
+    "transformers_enabled": true,
+    "gpu_layers": -1,
+    "context_length": 4096,
+    "threads": 4
+  },
+  
+  "providers": {
+    "openai": {
+      "enabled": false,
+      "api_key": "",
+      "base_url": "https://api.openai.com/v1",
+      "timeout": 60,
+      "max_retries": 3
+    },
+    "anthropic": {
+      "enabled": false,
+      "api_key": "",
+      "base_url": "https://api.anthropic.com/v1",
+      "timeout": 60,
+      "max_retries": 3
+    },
+    "mistral": {
+      "enabled": false,
+      "api_key": "",
+      "base_url": "https://api.mistral.ai/v1",
+      "timeout": 60,
+      "max_retries": 3
+    },
+    "google": {
+      "enabled": false,
+      "api_key": "",
+      "base_url": "https://generativelanguage.googleapis.com/v1",
+      "timeout": 60,
+      "max_retries": 3
+    },
+    "perplexity": {
+      "enabled": false,
+      "api_key": "",
+      "base_url": "https://api.perplexity.ai/v1",
+      "timeout": 60,
+      "max_retries": 3
+    },
+    "openrouter": {
+      "enabled": false,
+      "api_key": "",
+      "base_url": "https://openrouter.ai/api/v1",
+      "timeout": 60,
+      "max_retries": 3
+    }
+  },
+  
+  "memory": {
+    "enabled": true,
+    "type": "vector",
+    "collection_name": "metapilot_memory",
+    "embedding_model": "all-MiniLM-L6-v2",
+    "max_memory_size": 10000,
+    "similarity_threshold": 0.7
+  },
+  
+  "knowledge": {
+    "enabled": true,
+    "data_dir": "knowledge",
+    "embedding_model": "all-MiniLM-L6-v2",
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "index_type": "faiss",
+    "auto_index": true
+  },
+  
+  "plugins": {
+    "enabled": true,
+    "plugins_dir": "plugins",
+    "auto_load": true,
+    "sandbox_enabled": true,
+    "sandbox_type": "subprocess",
+    "allowed_modules": ["json", "math", "datetime", "re", "collections", "itertools", "functools"],
+    "blocked_modules": ["os", "sys", "subprocess", "socket", "http", "urllib", "requests", "ctypes", "pickle", "marshal", "importlib"]
+  },
+  
+  "scheduler": {
+    "enabled": true,
+    "num_workers": 4,
+    "max_queue_size": 1000,
+    "task_timeout": 300,
+    "max_retries": 3,
+    "retry_delay": 5
+  },
+  
+  "cache": {
+    "enabled": true,
+    "cache_dir": "cache",
+    "default_ttl": 3600,
+    "max_size": "1GB",
+    "cleanup_interval": 3600
+  },
+  
+  "features": {
+    "multi_provider": true,
+    "parallel_execution": true,
+    "response_merging": true,
+    "intent_analysis": true,
+    "task_planning": true,
+    "memory_system": true,
+    "knowledge_base": true,
+    "plugin_system": true,
+    "browser_automation": true,
+    "sandbox_execution": true,
+    "audit_logging": true,
+    "rate_limiting": true,
+    "analytics": false
+  },
+  
+  "ui": {
+    "theme": "system",
+    "language": "en",
+    "sidebar_collapsed": false,
+    "sidebar_width": 280,
+    "editor_font_size": 14,
+    "editor_font_family": "Inter, system-ui, sans-serif",
+    "chat_auto_scroll": true,
+    "chat_show_timestamps": true,
+    "chat_show_provider": true,
+    "notifications_enabled": true
+  }
+}
