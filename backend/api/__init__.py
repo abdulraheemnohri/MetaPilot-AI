@@ -6,5 +6,6 @@ Contains all FastAPI routers for the application.
 
 from .ai_router import router as ai_router
 from .auth_router import router as auth_router
+from .merge_router import router as merge_router
 
-__all__ = ["ai_router", "auth_router"]
+__all__ = ["ai_router", "auth_router", "merge_router"]
