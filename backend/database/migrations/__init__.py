@@ -1,19 +1,30 @@
 """
-Database Migrations for MetaPilot AI
+Alembic Migrations for MetaPilot-AI Database
 
-This directory contains database migration scripts.
-Use Alembic for database migrations.
-
-To create a new migration:
-1. Install Alembic: pip install alembic
-2. Initialize (if not done): alembic init alembic
-3. Configure alembic.ini with your database URL
-4. Create migration: alembic revision --autogenerate -m "description"
-5. Apply migration: alembic upgrade head
-
-To apply all migrations:
-    alembic upgrade head
-
-To rollback:
-    alembic downgrade -1
+This directory contains database migration scripts managed by Alembic.
+Run migrations using: alembic upgrade head
+Create new migrations: alembic revision --autogenerate -m "message"
 """
+
+from alembic import context
+from alembic.runtime.migration import MigrationContext
+from alembic.script import ScriptDirectory
+
+__all__ = ['run_migrations', 'get_current_revision']
+
+
+def run_migrations(connection):
+    """Run all pending migrations on the given connection."""
+    context.configure(
+        connection=connection,
+        target_metadata=None,
+        compare_type=True,
+    )
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def get_current_revision():
+    """Get the current database revision."""
+    script = ScriptDirectory.from_config(context.config)
+    return script.get_current_head()
