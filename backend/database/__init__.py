@@ -1,65 +1,26 @@
 """
 Database Module for MetaPilot AI
 
-Provides database connection management, models, and migrations.
+Provides database connection, models, and utilities.
 """
 
-from .connection import (
-    engine,
-    async_engine,
-    SessionLocal,
-    AsyncSessionLocal,
-    get_db_session,
-    get_async_db_session,
-    Base,
-)
-from .models import (
-    User,
-    UserRole,
-    Permission,
-    RolePermission,
-    UserPermission,
-    Conversation,
-    Message,
-    KnowledgeDocument,
-    KnowledgeChunk,
-    Embedding,
-    Task,
-    TaskResult,
-    ProviderConfig,
-    ModelConfig,
-    Plugin,
-    Project,
-    AuditLog,
-    Session,
-)
+from .connection import get_db, init_db, close_db
+from .models import *
 
 __all__ = [
-    # Connection
-    "engine",
-    "async_engine",
-    "SessionLocal",
-    "AsyncSessionLocal",
-    "get_db_session",
-    "get_async_db_session",
-    "Base",
-    # Models
+    "get_db",
+    "init_db", 
+    "close_db",
     "User",
-    "UserRole",
-    "Permission",
-    "RolePermission",
-    "UserPermission",
+    "Session",
+    "UserSession",
     "Conversation",
     "Message",
-    "KnowledgeDocument",
-    "KnowledgeChunk",
-    "Embedding",
+    "Document",
+    "DocumentChunk",
+    "AIProvider",
     "Task",
-    "TaskResult",
-    "ProviderConfig",
-    "ModelConfig",
     "Plugin",
-    "Project",
     "AuditLog",
-    "Session",
+    "SystemConfig",
 ]

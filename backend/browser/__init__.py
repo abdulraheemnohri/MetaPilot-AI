@@ -1,13 +1,9 @@
 """
 MetaPilot AI - Browser Module
 
-Provides browser automation and web scraping capabilities.
+Provides web browsing and scraping capabilities for AI agents.
 """
 
-from .browser_manager import BrowserManager, BrowserConfig, BrowserInstance
+from .browser_manager import BrowserManager, browser_manager
 
-__all__ = [
-    "BrowserManager",
-    "BrowserConfig", 
-    "BrowserInstance"
-]
+__all__ = ["BrowserManager", "browser_manager"]
