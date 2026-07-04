@@ -22,6 +22,7 @@ class ProviderType(str, Enum):
     GOOGLE = "google"
     PERPLEXITY = "perplexity"
     LOCAL = "local"
+    LOCAL_GGUF = "local_gguf"
 
 
 @dataclass

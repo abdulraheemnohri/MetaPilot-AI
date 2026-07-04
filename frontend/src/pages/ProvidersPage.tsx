@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useProvidersStore } from '../store/useProvidersStore';
 import { Button } from '../components/ui/Button';
+import { Input } from "../components/ui/Input";
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 
@@ -38,6 +39,13 @@ export function ProvidersPage() {
                   <option value="Google">Google</option>
                   <option value="Perplexity">Perplexity</option>
                   <option value="Local">Local (GGUF)</option>
+                  <option value="ChatGPTBrowser">ChatGPT (Browser)</option>
+                  <option value="ClaudeBrowser">Claude (Browser)</option>
+                  <option value="GeminiBrowser">Gemini (Browser)</option>
+                  <option value="PerplexityBrowser">Perplexity (Browser)</option>
+                  <option value="DeepSeekBrowser">DeepSeek (Browser)</option>
+                  <option value="MistralBrowser">Mistral (Browser)</option>
+                  <option value="HuggingChatBrowser">HuggingChat (Browser)</option>
                 </select>
               </div>
               <div>

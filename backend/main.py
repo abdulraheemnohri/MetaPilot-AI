@@ -6,7 +6,7 @@ FastAPI application with all routers, middleware, and configuration.
 
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
@@ -16,7 +16,7 @@ from .config import settings, get_settings
 from .database.connection import init_db, close_db
 from .api import ai_router, auth_router
 from .providers.registry import provider_registry
-from .security.auth import get_current_user
+from .api.auth_router import get_current_user
 
 # Configure logging
 logging.basicConfig(
@@ -97,8 +97,8 @@ app.add_middleware(
 
 
 # Include API routers
-app.include_router(auth_router.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(ai_router.router, prefix="/api/ai", tags=["AI"])
+app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(ai_router, prefix="/api/ai", tags=["AI"])
 
 
 # Global exception handler

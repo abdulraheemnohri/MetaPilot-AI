@@ -138,7 +138,7 @@ class KnowledgeBase:
         file_hash = self._compute_hash(file_content)
         
         # Check if document already exists
-        async for session in get_async_db_session():
+        async with get_async_db_session() as session:
             existing_doc = await session.execute(
                 KnowledgeDocument.__table__.select()
                 .where(KnowledgeDocument.content_hash == file_hash)
@@ -156,7 +156,7 @@ class KnowledgeBase:
                     chunk_count=len(existing_doc.chunks) if existing_doc.chunks else 0,
                     created_at=existing_doc.created_at,
                     updated_at=existing_doc.updated_at,
-                    metadata=existing_doc.metadata or {},
+                    metadata=existing_doc.extra_info or {},
                 )
             
             # Create document record
@@ -192,7 +192,7 @@ class KnowledgeBase:
                 chunk_count=len(doc.chunks) if doc.chunks else 0,
                 created_at=doc.created_at,
                 updated_at=doc.updated_at,
-                metadata=doc.metadata or {},
+                metadata=doc.extra_info or {},
             )
     
     async def _process_document(self, doc: KnowledgeDocument, content: str):
@@ -203,7 +203,7 @@ class KnowledgeBase:
             # Chunk the document
             chunks = self.document_processor.chunk_text(content)
             
-            async for session in get_async_db_session():
+            async with get_async_db_session() as session:
                 for i, chunk in enumerate(chunks):
                     # Create chunk record
                     chunk_record = KnowledgeChunk(
@@ -242,7 +242,7 @@ class KnowledgeBase:
                 
         except Exception as e:
             logger.error(f"Failed to process document {doc.file_name}: {e}")
-            async for session in get_async_db_session():
+            async with get_async_db_session() as session:
                 doc.processing_error = str(e)
                 await session.commit()
             raise
@@ -272,7 +272,7 @@ class KnowledgeBase:
         query_embedding = await self.embedding_manager.embed(query)
         
         # Search for similar embeddings
-        async for session in get_async_db_session():
+        async with get_async_db_session() as session:
             # Build query
             from sqlalchemy import select, func
             from sqlalchemy.orm import joinedload
@@ -302,7 +302,7 @@ class KnowledgeBase:
                 # Apply metadata filter if provided
                 if metadata_filter:
                     chunk = embedding.chunk
-                    if not self._matches_metadata_filter(chunk.metadata or {}, metadata_filter):
+                    if not self._matches_metadata_filter(chunk.extra_info or {}, metadata_filter):
                         continue
                 
                 results.append({
@@ -327,7 +327,7 @@ class KnowledgeBase:
                     metadata={
                         "document_name": result["document"].file_name,
                         "chunk_index": result["chunk"].chunk_index,
-                        ** (result["chunk"].metadata or {}),
+                        ** (result["chunk"].extra_info or {}),
                     },
                 ))
             
@@ -335,7 +335,7 @@ class KnowledgeBase:
     
     async def get_document(self, document_id: str) -> Optional[DocumentInfo]:
         """Get a document by ID."""
-        async for session in get_async_db_session():
+        async with get_async_db_session() as session:
             doc = await session.get(KnowledgeDocument, document_id)
             
             if not doc:
@@ -350,7 +350,7 @@ class KnowledgeBase:
                 chunk_count=len(doc.chunks) if doc.chunks else 0,
                 created_at=doc.created_at,
                 updated_at=doc.updated_at,
-                metadata=doc.metadata or {},
+                metadata=doc.extra_info or {},
             )
     
     async def list_documents(
@@ -361,7 +361,7 @@ class KnowledgeBase:
         offset: int = 0,
     ) -> List[DocumentInfo]:
         """List all documents in the knowledge base."""
-        async for session in get_async_db_session():
+        async with get_async_db_session() as session:
             from sqlalchemy import select
             
             stmt = select(KnowledgeDocument)
@@ -387,14 +387,14 @@ class KnowledgeBase:
                     chunk_count=len(doc.chunks) if doc.chunks else 0,
                     created_at=doc.created_at,
                     updated_at=doc.updated_at,
-                    metadata=doc.metadata or {},
+                    metadata=doc.extra_info or {},
                 )
                 for doc in docs
             ]
     
     async def delete_document(self, document_id: str) -> bool:
         """Delete a document from the knowledge base."""
-        async for session in get_async_db_session():
+        async with get_async_db_session() as session:
             doc = await session.get(KnowledgeDocument, document_id)
             
             if not doc:
@@ -412,13 +412,13 @@ class KnowledgeBase:
         metadata: Dict[str, Any],
     ) -> bool:
         """Update document metadata."""
-        async for session in get_async_db_session():
+        async with get_async_db_session() as session:
             doc = await session.get(KnowledgeDocument, document_id)
             
             if not doc:
                 return False
             
-            doc.metadata = {**(doc.metadata or {}), **metadata}
+            doc.extra_info = {**(doc.extra_info or {}), **metadata}
             doc.updated_at = datetime.utcnow()
             
             await session.commit()
@@ -475,7 +475,7 @@ class KnowledgeBase:
     
     async def reindex_document(self, document_id: str) -> bool:
         """Re-process and re-index a document."""
-        async for session in get_async_db_session():
+        async with get_async_db_session() as session:
             doc = await session.get(KnowledgeDocument, document_id)
             
             if not doc:
@@ -496,7 +496,7 @@ class KnowledgeBase:
     
     async def get_statistics(self) -> Dict[str, Any]:
         """Get knowledge base statistics."""
-        async for session in get_async_db_session():
+        async with get_async_db_session() as session:
             from sqlalchemy import select, func
             
             # Count documents

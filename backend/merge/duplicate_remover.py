@@ -328,7 +328,7 @@ class DuplicateRemover:
 
 
 # Global duplicate remover instance
-duplicate_remover = None
+duplicate_remover = DuplicateRemover()
 
 
 def get_duplicate_remover(similarity_threshold: float = 0.9,

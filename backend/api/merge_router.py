@@ -10,7 +10,7 @@ from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
 
 from ..merge import conflict_resolver, duplicate_remover, result_fuser, similarity_detector
-from ..security.auth import get_current_user
+from ..api.auth_router import get_current_user
 from ..security.permission_manager import check_permission
 
 logger = logging.getLogger(__name__)

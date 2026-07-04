@@ -323,7 +323,7 @@ class ConflictResolver:
 
 
 # Global conflict resolver instance
-conflict_resolver = None
+conflict_resolver = ConflictResolver()
 
 
 def get_conflict_resolver(default_strategy: ConflictResolutionStrategy = ConflictResolutionStrategy.MAJORITY,

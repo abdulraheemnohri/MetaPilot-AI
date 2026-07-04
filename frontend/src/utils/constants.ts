@@ -1,8 +1,8 @@
-// Application constants and configuration values
+/*
 
-// API Configuration
 export const API_ENDPOINTS = {
   HEALTH: '/api/health',
+*/
   AUTH: {
     LOGIN: '/api/auth/token',
     REGISTER: '/api/auth/register',
@@ -43,7 +43,6 @@ export const API_ENDPOINTS = {
   },
 };
 
-// AI Provider Types
 export const AI_PROVIDER_TYPES = [
   'openai',
   'anthropic',
@@ -55,7 +54,6 @@ export const AI_PROVIDER_TYPES = [
 
 export type AIProviderType = typeof AI_PROVIDER_TYPES[number];
 
-// Task Types
 export const TASK_TYPES = [
   'ai_inference',
   'document_processing',
@@ -65,7 +63,6 @@ export const TASK_TYPES = [
 
 export type TaskType = typeof TASK_TYPES[number];
 
-// Task Statuses
 export const TASK_STATUSES = [
   'pending',
   'running',
@@ -76,11 +73,9 @@ export const TASK_STATUSES = [
 
 export type TaskStatus = typeof TASK_STATUSES[number];
 
-// Message Roles
 export const MESSAGE_ROLES = ['user', 'assistant', 'system'] as const;
 export type MessageRole = typeof MESSAGE_ROLES[number];
 
-// Default Settings
 export const DEFAULT_SETTINGS = {
   MAX_TOKENS: 4096,
   TEMPERATURE: 0.7,
@@ -89,7 +84,6 @@ export const DEFAULT_SETTINGS = {
   PRESENCE_PENALTY: 0.0,
 };
 
-// Storage Keys
 export const STORAGE_KEYS = {
   AUTH: 'meta-pilot-auth',
   SETTINGS: 'meta-pilot-settings',
@@ -97,7 +91,6 @@ export const STORAGE_KEYS = {
   CHAT_HISTORY: 'meta-pilot-chat-history',
 };
 
-// Error Messages
 export const ERROR_MESSAGES = {
   NETWORK_ERROR: 'Network error. Please check your connection.',
   AUTH_ERROR: 'Authentication failed. Please login again.',
@@ -108,7 +101,6 @@ export const ERROR_MESSAGES = {
   SERVER_ERROR: 'Server error. Please try again later.',
 };
 
-// Success Messages
 export const SUCCESS_MESSAGES = {
   LOGIN: 'Logged in successfully!',
   LOGOUT: 'Logged out successfully!',

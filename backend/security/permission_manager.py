@@ -607,3 +607,10 @@ def get_permission_manager(config_file: Optional[str] = None) -> PermissionManag
     if permission_manager is None:
         permission_manager = PermissionManager(config_file)
     return permission_manager
+
+def check_permission(user: Any, permission: str):
+    """
+    Check if a user has a specific permission.
+    Dummy implementation.
+    """
+    return True

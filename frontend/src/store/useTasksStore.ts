@@ -1,8 +1,8 @@
-"""
-MetaPilot AI - Tasks Store
+/*
+// MetaPilot AI - Tasks Store
 
-Task management and execution state.
-"""
+// Task management and execution state.
+*/
 
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
@@ -184,7 +184,6 @@ export const useTasksStore = create<TasksState>()(
   )
 );
 
-// Selector hooks
 export const useTasks = () => useTasksStore((state) => state.tasks);
 export const useSelectedTaskIds = () => useTasksStore((state) => state.selectedTaskIds);
 export const useLogs = () => useTasksStore((state) => state.logs);
@@ -195,7 +194,6 @@ export const useActiveTasks = () => useTasksStore((state) => state.activeTasks);
 export const useIsLoading = () => useTasksStore((state) => state.isLoading);
 export const useError = () => useTasksStore((state) => state.error);
 
-// Helper hooks
 export const useTaskCount = () => useTasksStore((state) => state.tasks.length);
 export const useRunningTasks = () => 
   useTasksStore((state) => 
