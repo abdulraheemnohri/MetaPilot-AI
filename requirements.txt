@@ -1,1 +1,74 @@
-[object Object]
+# MetaPilot-AI Python Dependencies
+# Generated: July 4, 2026
+
+# FastAPI & Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Database
+sqlalchemy==2.0.25
+asyncpg==0.29.0
+alembic==1.13.1
+
+# AI Providers
+openai==1.12.0
+anthropic==0.25.0
+mistralai==0.3.0
+google-generativeai==0.4.1
+perplexity==0.1.7
+
+# HTTP Client
+httpx==0.26.0
+requests==2.31.0
+
+# Async & Concurrency
+aiohttp==3.9.1
+anyio==4.3.0
+
+# Configuration & Environment
+python-dotenv==1.0.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Browser Automation
+playwright==1.42.0
+
+# Vector Database & Embeddings
+chromadb==0.4.22
+sentence-transformers==2.2.2
+numpy==1.26.2
+
+# File Processing
+pypdf==3.17.4
+python-docx==1.1.0
+python-pptx==0.6.21
+beautifulsoup4==4.12.2
+lxml==4.9.4
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2024.1
+uuid==1.30
+
+# Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+httpx-mock==0.0.8
+
+# Development
+black==24.1.1
+isort==5.13.2
+flake8==6.1.0
+mypy==1.8.0
+
+# Local AI Support (Optional)
+llama-cpp-python==0.2.7
+transformers==4.38.2
+torch==2.1.2
