@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel, Field
 
 from ..orchestrator import OrchestrationRequest, orchestrator
-from ..security.auth import get_current_user
+from ..api.auth_router import get_current_user
 from ..security.permission_manager import check_permission
 from ..providers.registry import provider_registry
 
@@ -97,3 +97,15 @@ async def list_models(current_user: dict = Depends(get_current_user)):
                     "provider_name": provider.name,
                 })
     return {"success": True, "models": all_models, "total": len(all_models)}
+@router.post("/providers/{provider_id}/login")
+async def provider_login(provider_id: str, current_user: dict = Depends(get_current_user)):
+    check_permission(current_user, "ai:manage")
+    provider = provider_registry.get_provider(provider_id)
+    if not provider:
+        raise HTTPException(status_code=404, detail=f"Provider {provider_id} not found")
+
+    if hasattr(provider, "login"):
+        success = await provider.login()
+        return {"success": success, "provider_id": provider_id}
+    else:
+        return {"success": True, "message": "Provider does not require manual login", "provider_id": provider_id}

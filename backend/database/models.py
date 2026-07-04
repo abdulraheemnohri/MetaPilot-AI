@@ -77,8 +77,10 @@ class User(Base):
     sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")
     user_sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
     conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
-    documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
+    knowledge_documents = relationship("KnowledgeDocument", back_populates="user", cascade="all, delete-orphan")
+    ai_providers = relationship("AIProvider", back_populates="user", cascade="all, delete-orphan")
     tasks = relationship("Task", back_populates="user", cascade="all, delete-orphan")
+    plugins = relationship("Plugin", back_populates="user", cascade="all, delete-orphan")
     audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan")
 
 
@@ -115,7 +117,7 @@ class Conversation(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     title = Column(String(500))
     is_active = Column(Boolean, default=True)
-    metadata = Column(JSON, default={})
+    extra_info = Column(JSON, default={})
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     user = relationship("User", back_populates="conversations")
@@ -128,14 +130,14 @@ class Message(Base):
     conversation_id = Column(String(50), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
     role = Column(SQLEnum(MessageRole), nullable=False)
     content = Column(Text, nullable=False)
-    metadata = Column(JSON, default={})
+    extra_info = Column(JSON, default={})
     token_count = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     conversation = relationship("Conversation", back_populates="messages")
 
 
-class Document(Base):
+class KnowledgeDocument(Base):
     __tablename__ = "documents"
     id = Column(String(50), primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
@@ -147,24 +149,24 @@ class Document(Base):
     status = Column(SQLEnum(DocumentStatus), default=DocumentStatus.UPLOADED)
     content = Column(Text)
     embeddings = Column(JSON)
-    metadata = Column(JSON, default={})
+    extra_info = Column(JSON, default={})
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
     processed_at = Column(DateTime(timezone=True))
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    user = relationship("User", back_populates="documents")
-    chunks = relationship("DocumentChunk", back_populates="document", cascade="all, delete-orphan")
+    user = relationship("User", back_populates="knowledge_documents")
+    chunks = relationship("KnowledgeChunk", back_populates="document", cascade="all, delete-orphan")
 
 
-class DocumentChunk(Base):
+class KnowledgeChunk(Base):
     __tablename__ = "document_chunks"
     id = Column(String(50), primary_key=True, index=True)
     document_id = Column(String(50), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
     content = Column(Text, nullable=False)
     chunk_index = Column(Integer, nullable=False)
     embeddings = Column(JSON)
-    metadata = Column(JSON, default={})
+    extra_info = Column(JSON, default={})
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    document = relationship("Document", back_populates="chunks")
+    document = relationship("KnowledgeDocument", back_populates="chunks")
 
 
 class AIProvider(Base):
@@ -232,7 +234,7 @@ class AuditLog(Base):
     new_value = Column(JSON)
     ip_address = Column(String(45))
     user_agent = Column(String(500))
-    metadata = Column(JSON, default={})
+    extra_info = Column(JSON, default={})
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     user = relationship("User", back_populates="audit_logs")
 
@@ -245,3 +247,15 @@ class SystemConfig(Base):
     description = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+class Embedding(Base):
+    __tablename__ = "embeddings"
+    id = Column(String(50), primary_key=True, index=True)
+    chunk_id = Column(String(50), ForeignKey("document_chunks.id", ondelete="CASCADE"), nullable=False)
+    vector = Column(JSON, nullable=False)
+    model_name = Column(String(100))
+    extra_info = Column(JSON, default={})
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    chunk = relationship("KnowledgeChunk", back_populates="embeddings")
+
+# Adding relationship back to KnowledgeChunk
+KnowledgeChunk.embeddings = relationship("Embedding", back_populates="chunk", cascade="all, delete-orphan")

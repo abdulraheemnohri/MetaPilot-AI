@@ -1,13 +1,11 @@
-// Plugins service for MetaPilot AI
-// Handles plugin-related API calls
+/*
 
 import { apiService } from './api';
 import { Plugin, ApiResponse, PaginatedResponse } from '../types';
+*/
 
-// Plugins API base path
 const PLUGINS_BASE_URL = '/api/plugins';
 
-// Plugins service
 const pluginsService = {
   // Get all plugins
   getAllPlugins: async (

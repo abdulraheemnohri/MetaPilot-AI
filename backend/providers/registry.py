@@ -9,6 +9,7 @@ from typing import Dict, Optional, List, Any
 from dataclasses import dataclass
 
 from .base import AIProvider, ProviderType, ProviderConfig
+from ..config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -47,20 +48,10 @@ class ProviderRegistry:
     ) -> bool:
         """
         Register a provider.
-        
-        Args:
-            name: Unique name for the provider
-            provider: The provider instance
-            config: Optional configuration
-            is_default: Whether to set as default
-        
-        Returns:
-            True if registration was successful
         """
         if name in self.providers:
             logger.warning(f"Provider '{name}' already registered, overwriting")
         
-        # Use provider's config if not provided
         if config is None:
             config = provider.get_config()
         
@@ -80,12 +71,6 @@ class ProviderRegistry:
     def unregister(self, name: str) -> bool:
         """
         Unregister a provider.
-        
-        Args:
-            name: Name of the provider to unregister
-        
-        Returns:
-            True if unregistration was successful
         """
         if name not in self.providers:
             logger.warning(f"Provider '{name}' not found")
@@ -99,31 +84,22 @@ class ProviderRegistry:
         logger.info(f"Unregistered provider: {name}")
         return True
     
-    def get(self, name: str) -> Optional[AIProvider]:
+    def get_provider(self, name: str) -> Optional[AIProvider]:
         """
         Get a provider by name.
-        
-        Args:
-            name: Name of the provider
-        
-        Returns:
-            The provider instance, or None if not found
         """
         if name not in self.providers:
             logger.warning(f"Provider '{name}' not found")
             return None
         
         return self.providers[name].provider
+
+    def get(self, name: str) -> Optional[AIProvider]:
+        return self.get_provider(name)
     
     def get_config(self, name: str) -> Optional[ProviderConfig]:
         """
         Get a provider's configuration.
-        
-        Args:
-            name: Name of the provider
-        
-        Returns:
-            The provider's configuration, or None if not found
         """
         if name not in self.providers:
             return None
@@ -133,12 +109,8 @@ class ProviderRegistry:
     def get_default(self) -> Optional[AIProvider]:
         """
         Get the default provider.
-        
-        Returns:
-            The default provider, or None if not set
         """
         if not self._default_provider:
-            # Return the first provider if no default is set
             if self.providers:
                 return list(self.providers.values())[0].provider
             return None
@@ -148,12 +120,6 @@ class ProviderRegistry:
     def set_default(self, name: str) -> bool:
         """
         Set the default provider.
-        
-        Args:
-            name: Name of the provider to set as default
-        
-        Returns:
-            True if the provider was found and set as default
         """
         if name not in self.providers:
             logger.warning(f"Provider '{name}' not found")
@@ -166,18 +132,17 @@ class ProviderRegistry:
     def list_providers(self) -> List[Dict[str, Any]]:
         """
         List all registered providers.
-        
-        Returns:
-            List of provider information dictionaries
         """
         providers = []
         for name, registered in self.providers.items():
             providers.append({
-                "name": name,
+                "id": name,
+                "name": registered.provider.name,
                 "type": registered.provider.provider_type.value,
                 "is_default": name == self._default_provider,
                 "default_model": registered.provider.default_model,
                 "config": registered.config.to_dict(),
+                "is_active": True,
             })
         
         return providers
@@ -185,12 +150,6 @@ class ProviderRegistry:
     def list_by_type(self, provider_type: ProviderType) -> List[str]:
         """
         List all providers of a specific type.
-        
-        Args:
-            provider_type: The provider type to filter by
-        
-        Returns:
-            List of provider names
         """
         return [
             name for name, registered in self.providers.items()
@@ -200,12 +159,6 @@ class ProviderRegistry:
     def get_by_type(self, provider_type: ProviderType) -> List[AIProvider]:
         """
         Get all providers of a specific type.
-        
-        Args:
-            provider_type: The provider type to filter by
-        
-        Returns:
-            List of provider instances
         """
         return [
             registered.provider for registered in self.providers.values()
@@ -215,12 +168,6 @@ class ProviderRegistry:
     def has_provider(self, name: str) -> bool:
         """
         Check if a provider is registered.
-        
-        Args:
-            name: Name of the provider
-        
-        Returns:
-            True if the provider is registered
         """
         return name in self.providers
     
@@ -235,9 +182,92 @@ class ProviderRegistry:
         logger.info("Cleared all providers")
     
     async def initialize(self):
-        """Initialize the registry (can be overridden by subclasses)."""
+        """Initialize the registry by registering available providers."""
+        if self._initialized:
+            return
+
+        from .openai_provider import OpenAIProvider
+        from .anthropic_provider import AnthropicProvider
+        from .mistral_provider import MistralProvider
+        from .google_provider import GoogleProvider
+        from .perplexity_provider import PerplexityProvider
+        from .local_gguf import LocalGGUFProvider
+        from .chatgpt_browser import ChatGPTBrowserProvider
+        from .claude_browser import ClaudeBrowserProvider
+        from .gemini_browser import GeminiBrowserProvider
+        from .perplexity_browser import PerplexityBrowserProvider
+        from .deepseek_browser import DeepSeekBrowserProvider
+        from .mistral_browser import MistralBrowserProvider
+        from .huggingchat_browser import HuggingChatBrowserProvider
+
+        # Register OpenAI
+        if settings.OPENAI_API_KEY:
+            config = ProviderConfig(
+                provider_type=ProviderType.OPENAI,
+                name="OpenAI",
+                api_key=settings.OPENAI_API_KEY
+            )
+            self.register("openai", OpenAIProvider(config), is_default=True)
+
+        # Register Anthropic
+        if settings.ANTHROPIC_API_KEY:
+            config = ProviderConfig(
+                provider_type=ProviderType.ANTHROPIC,
+                name="Anthropic",
+                api_key=settings.ANTHROPIC_API_KEY
+            )
+            self.register("anthropic", AnthropicProvider(config))
+
+        # Register Mistral
+        if settings.MISTRAL_API_KEY:
+            config = ProviderConfig(
+                provider_type=ProviderType.MISTRAL,
+                name="Mistral",
+                api_key=settings.MISTRAL_API_KEY
+            )
+            self.register("mistral", MistralProvider(config))
+
+        # Register Google
+        if settings.GOOGLE_API_KEY:
+            config = ProviderConfig(
+                provider_type=ProviderType.GOOGLE,
+                name="Google",
+                api_key=settings.GOOGLE_API_KEY
+            )
+            self.register("google", GoogleProvider(config))
+
+        # Register Perplexity
+        if settings.PERPLEXITY_API_KEY:
+            config = ProviderConfig(
+                provider_type=ProviderType.PERPLEXITY,
+                name="Perplexity",
+                api_key=settings.PERPLEXITY_API_KEY
+            )
+            self.register("perplexity", PerplexityProvider(config))
+
+        # Register local GGUF
+        self.register("local_gguf", LocalGGUFProvider())
+
+        # Register Browser Providers
+        self.register("chatgpt_browser", ChatGPTBrowserProvider())
+        self.register("claude_browser", ClaudeBrowserProvider())
+        self.register("gemini_browser", GeminiBrowserProvider())
+        self.register("perplexity_browser", PerplexityBrowserProvider())
+        self.register("deepseek_browser", DeepSeekBrowserProvider())
+        self.register("mistral_browser", MistralBrowserProvider())
+        self.register("huggingchat_browser", HuggingChatBrowserProvider())
+
         self._initialized = True
-    
+        logger.info(f"Provider registry initialized with {self.count()} providers")
+
+    async def shutdown(self):
+        """Shutdown all providers."""
+        self.clear()
+        self._initialized = False
+
     def is_initialized(self) -> bool:
         """Check if the registry is initialized."""
         return self._initialized
+
+# Global registry instance
+provider_registry = ProviderRegistry()

@@ -57,6 +57,8 @@ class Settings(BaseSettings):
     
     # Local AI Models
     MODELS_DIR: str = "./models"
+    LOCAL_AI_MODEL_PATH: str = "./models"
+    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
     
     # Logging
     LOG_LEVEL: str = "INFO"

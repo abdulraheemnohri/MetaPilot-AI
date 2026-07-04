@@ -464,7 +464,7 @@ class QualityScorer:
 
 
 # Global quality scorer instance
-quality_scorer = None
+quality_scorer = QualityScorer()
 
 
 def get_quality_scorer(metric_weights: Optional[Dict[QualityMetric, float]] = None,

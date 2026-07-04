@@ -468,7 +468,7 @@ class MemorySystem:
     ):
         """Save a memory entry to the database."""
         try:
-            async for session in get_async_db_session():
+            async with get_async_db_session() as session:
                 # Find or create conversation
                 conv = await session.get(Conversation, conversation_id)
                 
@@ -482,7 +482,7 @@ class MemorySystem:
                     conversation_id=conversation_id,
                     role=entry.role,
                     content=entry.content,
-                    metadata=entry.metadata,
+                    extra_info=entry.metadata,
                 )
                 
                 session.add(msg)
@@ -493,7 +493,7 @@ class MemorySystem:
     async def load_from_database(self, conversation_id: str):
         """Load memory entries from the database."""
         try:
-            async for session in get_async_db_session():
+            async with get_async_db_session() as session:
                 result = await session.execute(
                     Message.__table__.select()
                     .where(Message.conversation_id == conversation_id)
@@ -509,7 +509,7 @@ class MemorySystem:
                         content=msg.content,
                         role=msg.role,
                         timestamp=msg.created_at,
-                        metadata=msg.metadata or {},
+                        extra_info=msg.extra_info or {},
                     )
                     entries.append(entry)
                 

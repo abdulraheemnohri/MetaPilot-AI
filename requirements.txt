@@ -16,7 +16,7 @@ openai==1.12.0
 anthropic==0.25.0
 mistralai==0.3.0
 google-generativeai==0.4.1
-perplexity==0.1.7
+perplexity>=0.1.0
 
 # HTTP Client
 httpx==0.26.0
@@ -60,7 +60,7 @@ bcrypt==4.1.2
 pytest==7.4.4
 pytest-asyncio==0.23.3
 pytest-cov==4.1.0
-httpx-mock==0.0.8
+pytest-httpx
 
 # Development
 black==24.1.1
@@ -71,4 +71,4 @@ mypy==1.8.0
 # Local AI Support (Optional)
 llama-cpp-python==0.2.7
 transformers==4.38.2
-torch==2.1.2
+torch>=2.2.0
