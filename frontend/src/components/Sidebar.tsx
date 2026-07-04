@@ -28,8 +28,7 @@ export function Sidebar() {
               to={to}
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
-                  isActive 
-                    ? 'bg-accent text-accent-foreground font-medium'                     : 'hover:bg-muted text-foreground'
+                  isActive ? 'bg-accent text-accent-foreground font-medium' : 'hover:bg-muted text-foreground'
                 }`
               }
             >
@@ -40,9 +39,7 @@ export function Sidebar() {
         </nav>
 
         <div className="p-2">
-          <p className="text-xs text-muted-foreground text-center">
-            v1.0.0
-          </p>
+          <p className="text-xs text-muted-foreground text-center">v1.0.0</p>
         </div>
       </div>
     </aside>

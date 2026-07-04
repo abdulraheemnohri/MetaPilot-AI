@@ -6,11 +6,7 @@ interface BadgeProps {
   className?: string;
 }
 
-export function Badge({
-  variant = 'default',
-  children,
-  className,
-}: BadgeProps) {
+export function Badge({ variant = 'default', children, className }: BadgeProps) {
   const variants = {
     default: 'bg-primary text-primary-foreground',
     secondary: 'bg-secondary text-secondary-foreground',
@@ -19,13 +15,7 @@ export function Badge({
   };
 
   return (
-    <span 
-      className={cn(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-        variants[variant],
-        className
-      )}
-    >
+    <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', variants[variant], className)}>
       {children}
     </span>
   );
