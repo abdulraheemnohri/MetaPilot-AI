@@ -1,24 +1,33 @@
-// Store exports for MetaPilot AI
-// Re-export all stores for easy importing
+import { useAppStore } from './useAppStore';
+import { useAuthStore } from './useAuthStore';
+import { useChatStore } from './useChatStore';
+import { useKnowledgeStore } from './useKnowledgeStore';
+import { usePluginsStore } from './usePluginsStore';
+import { useProvidersStore } from './useProvidersStore';
+import { useSettingsStore } from './useSettingsStore';
+import { useTasksStore } from './useTasksStore';
+import { useUiStore } from './useUiStore';
 
-export { useAuthStore } from './useAuthStore';
-export type { User } from './useAuthStore';
+export {
+  useAppStore,
+  useAuthStore,
+  useChatStore,
+  useKnowledgeStore,
+  usePluginsStore,
+  useProvidersStore,
+  useSettingsStore,
+  useTasksStore,
+  useUiStore,
+};
 
-export { useAppStore } from './useAppStore';
-export { useChatStore } from './useChatStore';
-export type { Message, Conversation } from './useChatStore';
-
-export { useKnowledgeStore } from './useKnowledgeStore';
-export type { Document } from './useKnowledgeStore';
-
-export { usePluginsStore } from './usePluginsStore';
-export type { Plugin } from './usePluginsStore';
-
-export { useProvidersStore } from './useProvidersStore';
-export type { Provider } from './useProvidersStore';
-
-export { useSettingsStore } from './useSettingsStore';
-export type { Settings } from './useSettingsStore';
-
-export { useUiStore } from './useUiStore';
-export type { UiState } from './useUiStore';
+export type {
+  AppState,
+  AuthState,
+  ChatState,
+  KnowledgeState,
+  PluginsState,
+  ProvidersState,
+  SettingsState,
+  TasksState,
+  UiState,
+} from './useAppStore';
