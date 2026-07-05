@@ -47,4 +47,4 @@ const PluginsPage: React.FC = () => {
   );
 };
 
-export default PluginsPage;
+export { PluginsPage };

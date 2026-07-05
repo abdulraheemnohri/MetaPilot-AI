@@ -63,6 +63,8 @@ class ProviderRegistry:
         from .copilot_browser import CopilotBrowserProvider
         from .grok_browser import GrokBrowserProvider
         from .qwen_browser import QwenBrowserProvider
+        from .you_browser import YouBrowserProvider
+        from .duckduckgo_browser import DuckDuckGoBrowserProvider
 
         if settings.OPENAI_API_KEY:
             self.register("openai", OpenAIProvider(ProviderConfig(ProviderType.OPENAI, "OpenAI", api_key=settings.OPENAI_API_KEY)), is_default=True)
@@ -78,6 +80,8 @@ class ProviderRegistry:
         self.register("copilot_browser", CopilotBrowserProvider())
         self.register("grok_browser", GrokBrowserProvider())
         self.register("qwen_browser", QwenBrowserProvider())
+        self.register("you_browser", YouBrowserProvider())
+        self.register("duckduckgo_browser", DuckDuckGoBrowserProvider())
 
         self._initialized = True
 

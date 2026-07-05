@@ -1,84 +1,126 @@
 import { useState } from 'react';
 import { useProvidersStore } from '../store/useProvidersStore';
 import { Button } from '../components/ui/Button';
-import { Input } from "../components/ui/Input";
-import { Card } from '../components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
+import { Input } from '../components/ui/Input';
 
 export function ProvidersPage() {
-  const { providers, activeProvider, setActiveProvider, addProvider } = useProvidersStore();
+  const { providers, activeProvider, setActiveProvider, addProvider, removeProvider } = useProvidersStore();
   const [apiKey, setApiKey] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('');
 
   const handleAddProvider = async () => {
     if (!selectedProvider || !apiKey.trim()) return;
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    addProvider({ id: Date.now().toString(), name: selectedProvider, type: selectedProvider.toLowerCase(), apiKey: apiKey, isActive: true });
+    addProvider({
+      id: selectedProvider.toLowerCase().replace(' ', '_'),
+      name: selectedProvider,
+      type: selectedProvider.toLowerCase(),
+      apiKey: apiKey,
+      isActive: true
+    });
     setSelectedProvider('');
     setApiKey('');
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">AI Providers</h1>
-          <p className="text-muted-foreground">Manage your AI service providers</p>
-        </div>
-        <Card className="p-6">
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Add New Provider</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Provider Type</label>
-                <select value={selectedProvider} onChange={(e) => setSelectedProvider(e.target.value)} className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm">
-                  <option value="">Select a provider</option>
-                  <option value="OpenAI">OpenAI</option>
-                  <option value="Anthropic">Anthropic</option>
-                  <option value="Mistral">Mistral</option>
-                  <option value="Google">Google</option>
-                  <option value="Perplexity">Perplexity</option>
-                  <option value="Local">Local (GGUF)</option>
-                  <option value="ChatGPTBrowser">ChatGPT (Browser)</option>
-                  <option value="ClaudeBrowser">Claude (Browser)</option>
-                  <option value="GeminiBrowser">Gemini (Browser)</option>
-                  <option value="PerplexityBrowser">Perplexity (Browser)</option>
-                  <option value="DeepSeekBrowser">DeepSeek (Browser)</option>
-                  <option value="MistralBrowser">Mistral (Browser)</option>
-                  <option value="HuggingChatBrowser">HuggingChat (Browser)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">API Key</label>
-                <Input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="sk-..." />
-              </div>
+    <div className="container mx-auto p-6 max-w-7xl animate-fade-in">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">AI Providers</h1>
+        <p className="text-muted-foreground text-lg">Central control for API keys and browser-based orchestrations.</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card className="lg:col-span-1 h-fit shadow-lg border-primary/10">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold">Connect New AI</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-primary">Service Type</label>
+              <select
+                value={selectedProvider}
+                onChange={(e) => setSelectedProvider(e.target.value)}
+                className="w-full p-3 border rounded-xl bg-background focus:ring-2 focus:ring-primary outline-none transition-all"
+              >
+                <option value="">Select provider...</option>
+                <optgroup label="API-based">
+                  <option value="OpenAI">OpenAI (GPT-4o/o1)</option>
+                  <option value="Anthropic">Anthropic (Claude 3.5)</option>
+                  <option value="Mistral">Mistral AI</option>
+                  <option value="Google">Google Gemini 1.5</option>
+                </optgroup>
+                <optgroup label="Browser-based">
+                  <option value="ChatGPTBrowser">ChatGPT (Web)</option>
+                  <option value="ClaudeBrowser">Claude (Web)</option>
+                  <option value="GrokBrowser">Grok (Web)</option>
+                  <option value="PerplexityBrowser">Perplexity (Web)</option>
+                </optgroup>
+              </select>
             </div>
-            <Button onClick={handleAddProvider} disabled={!selectedProvider || !apiKey.trim()}>{'Add Provider'}</Button>
-          </div>
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-primary">Credentials</label>
+              <Input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="API Key or Session Token"
+                className="rounded-xl p-3"
+              />
+              <p className="text-[10px] text-muted-foreground mt-2 italic px-1">MetaPilot encrypts keys locally. Never shared with our servers.</p>
+            </div>
+            <Button
+              className="w-full py-6 rounded-xl font-bold text-lg shadow-primary/20 shadow-lg"
+              onClick={handleAddProvider}
+              disabled={!selectedProvider || !apiKey.trim()}
+            >
+              Link Assistant
+            </Button>
+          </CardContent>
         </Card>
-        <Card className="p-6">
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Your Providers</h2>
-            {providers.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">No providers added yet</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {providers.map(provider => (
-                  <div key={provider.id} className={`border rounded-lg p-4 cursor-pointer transition-all ${activeProvider === provider.id ? 'ring-2 ring-primary border-primary' : 'hover:border-muted'}`} onClick={() => setActiveProvider(provider.id)}>
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold">{provider.name}</h3>
-                      {activeProvider === provider.id && <Badge variant="default">Active</Badge>}
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">{provider.type}</p>
-                    <div className="flex gap-2">
-                      <Badge variant={provider.isActive ? 'default' : 'secondary'}>{provider.isActive ? 'Connected' : 'Disconnected'}</Badge>
-                    </div>
+
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {providers.length === 0 ? (
+            <div className="col-span-full py-20 text-center text-muted-foreground border-2 border-dashed rounded-2xl h-fit bg-muted/20">
+              <div className="text-4xl mb-4">🔌</div>
+              <p className="text-xl font-medium">No custom assistants connected</p>
+              <p className="text-sm">Link an API or Web session to start orchestrating.</p>
+            </div>
+          ) : (
+            providers.map(p => (
+              <Card
+                key={p.id}
+                className={`transition-all duration-300 ${activeProvider === p.id ? "ring-2 ring-primary border-primary bg-primary/5" : "hover:shadow-md cursor-pointer border-transparent shadow-sm"}`}
+                onClick={() => setActiveProvider(p.id)}
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg font-bold">{p.name}</CardTitle>
+                    <Badge variant={p.isActive ? "default" : "secondary"} className={p.isActive ? "bg-green-500 hover:bg-green-600" : ""}>
+                      {p.isActive ? "READY" : "OFFLINE"}
+                    </Badge>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </Card>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xs font-mono text-muted-foreground mb-4 opacity-70">ID: {p.id}</div>
+                  <div className="flex gap-2 justify-end">
+                    <Button size="sm" variant={activeProvider === p.id ? "default" : "outline"} className="rounded-lg">
+                      {activeProvider === p.id ? "Active" : "Activate"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:bg-destructive/10 rounded-lg"
+                      onClick={(e) => { e.stopPropagation(); removeProvider(p.id); }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
