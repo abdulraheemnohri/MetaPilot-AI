@@ -94,7 +94,7 @@ class Orchestrator:
                                 res = await plugin.execute(task.description, completed_tasks)
                                 return task.id, {"content": str(res), "provider_name": plugin.name, "metadata": {"is_plugin": True}}
 
-                        provider = get_best_provider(task.intent_type, providers)
+                        provider = await get_best_provider(task.intent_type, providers)
                         context = "\n".join([f"Result of {st_id}: {content}" for st_id, content in completed_tasks.items() if st_id in task.dependencies])
                         prompt = f"Previous Context:\n{context}\n\nCurrent Subtask: {task.description}"
                         return task.id, await self._get_provider_response(provider, request, prompt)

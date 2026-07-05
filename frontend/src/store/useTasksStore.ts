@@ -6,6 +6,6 @@ export interface TasksState {
   getTasksByStatus?: (status: string) => Task[];
 }
 
-export const useTasksStore = create<TasksState>((set) => ({
+export const useTasksStore = create<TasksState>(() => ({
   tasks: [],
 }));

@@ -45,7 +45,7 @@ export function ChatPage() {
       </div>
       <div className="sticky bottom-0 bg-background border-t border-border p-4">
         <form onSubmit={handleSubmit} className="flex gap-2">
-          <Select value={activeProvider} onVolumeChange={(value) => {}} className="w-48">
+          <Select value={activeProvider || ""}  className="w-48">
             {providers.map(provider => (<option key={provider.id} value={provider.id}>{provider.name}</option>))}
           </Select>
           <Input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type your message..." className="flex-1" disabled={isLoading} />

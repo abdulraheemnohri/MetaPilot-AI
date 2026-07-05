@@ -44,6 +44,7 @@ export interface PluginsState {}
 export interface ProvidersState {
   providers: any[];
   activeProvider: string | null;
+  removeProvider: (id: string) => void;
 }
 export interface SettingsState {
   theme: string;

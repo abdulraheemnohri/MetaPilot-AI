@@ -16,8 +16,9 @@ from .config import settings, get_settings
 from .database.connection import init_db, close_db
 from .api import ai_router, auth_router
 from .api import admin_router
-from .api import knowledge_router, export_router
+from .api import knowledge_router, export_router, voice_router, models_router, settings_router, routing_router
 from .providers.registry import provider_registry
+from .scheduler.scheduler import task_scheduler
 from .api.auth_router import get_current_user
 
 # Configure logging
@@ -48,6 +49,8 @@ async def lifespan(app: FastAPI):
     
     # Initialize providers
     await provider_registry.initialize()
+    # Start scheduler
+    await task_scheduler.start()
     logger.info(f"Initialized {len(provider_registry.providers)} AI providers")
     
     logger.info(f"Server running on http://{settings.HOST}:{settings.PORT}")
@@ -104,6 +107,9 @@ app.include_router(ai_router, prefix="/api/ai", tags=["AI"])
 app.include_router(admin_router.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(knowledge_router.router, prefix="/api/knowledge", tags=["Knowledge"])
 app.include_router(export_router.router, prefix="/api/export", tags=["Export"])
+app.include_router(voice_router.router, prefix="/api/voice", tags=["Voice"])
+app.include_router(models_router.router, prefix="/api/models", tags=["Models"])
+app.include_router(settings_router, routing_router.router, prefix="/api/settings", tags=["Settings"])
 
 
 # Global exception handler
