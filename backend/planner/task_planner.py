@@ -30,52 +30,39 @@ class TaskPlan:
     is_complex: bool = False
 
 class TaskPlanner:
-    """
-    Plans the execution of complex tasks.
-    """
-
     def __init__(self):
         pass
 
     async def create_plan(self, prompt: str, intent_type: str) -> TaskPlan:
-        """
-        Create a plan for the given prompt.
-        """
         loaded_models = [m["id"] for m in local_ai_manager.list_models() if m["is_loaded"]]
 
         if loaded_models:
             try:
                 model_id = loaded_models[0]
-                planning_prompt = f"""Break down the following user request into subtasks if necessary.
+                planning_prompt = f"""Break down the following user request into subtasks with clear dependencies.
 Request: "{prompt}"
 Intent: {intent_type}
-Respond only with a JSON object like: {{"is_complex": true, "subtasks": [{{"id": "1", "description": "task description", "intent_type": "research", "dependencies": []}}]}}"""
+Respond only with a JSON object like: {{"is_complex": true, "subtasks": [{{"id": "st1", "description": "task description", "intent_type": "research", "dependencies": []}}, {{"id": "st2", "description": "task description", "intent_type": "code", "dependencies": ["st1"]}}]}}"""
 
-                response = await local_ai_manager.generate(model_id, planning_prompt, max_tokens=500)
+                response = await local_ai_manager.generate(model_id, planning_prompt, max_tokens=1000)
                 data = json.loads(response["content"])
 
                 subtasks = [SubTask(**st) for st in data.get("subtasks", [])]
-                return TaskPlan(
-                    original_prompt=prompt,
-                    subtasks=subtasks,
-                    is_complex=data.get("is_complex", False)
-                )
+                return TaskPlan(original_prompt=prompt, subtasks=subtasks, is_complex=data.get("is_complex", len(subtasks) > 1))
             except Exception as e:
-                logger.warning(f"Local AI planning failed, falling back: {e}")
+                logger.warning(f"Local AI planning failed: {e}")
 
-        # Fallback to simple rule-based planning
-        subtasks = []
+        # Fallback to rule-based breakdown for common complex tasks
         if "build" in prompt.lower() and ("app" in prompt.lower() or "website" in prompt.lower()):
             subtasks = [
-                SubTask(id="1", description=f"Research requirements for: {prompt}", intent_type="research"),
-                SubTask(id="2", description=f"Design architecture for: {prompt}", intent_type="planning", dependencies=["1"]),
-                SubTask(id="3", description=f"Implement core logic for: {prompt}", intent_type="code", dependencies=["2"]),
-                SubTask(id="4", description=f"Create documentation for: {prompt}", intent_type="creative", dependencies=["3"])
+                SubTask(id="st1", description=f"Analyze requirements for {prompt}", intent_type="research"),
+                SubTask(id="st2", description=f"Define architecture and data schema", intent_type="planning", dependencies=["st1"]),
+                SubTask(id="st3", description=f"Implement frontend components", intent_type="code", dependencies=["st2"]),
+                SubTask(id="st4", description=f"Implement backend logic and APIs", intent_type="code", dependencies=["st2"]),
+                SubTask(id="st5", description=f"Write tests and documentation", intent_type="creative", dependencies=["st3", "st4"])
             ]
             return TaskPlan(original_prompt=prompt, subtasks=subtasks, is_complex=True)
 
-        subtasks = [SubTask(id="1", description=prompt, intent_type=intent_type)]
-        return TaskPlan(original_prompt=prompt, subtasks=subtasks, is_complex=False)
+        return TaskPlan(original_prompt=prompt, subtasks=[SubTask(id="st1", description=prompt, intent_type=intent_type)], is_complex=False)
 
-# Global task planner instance
 task_planner = TaskPlanner()

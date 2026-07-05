@@ -2,7 +2,7 @@
 MetaPilot AI - Orchestrator Module
 
 Main orchestration logic for combining multiple AI providers.
-Handles request routing, response aggregation, and result optimization.
+Handles request routing, response aggregation, and parallel execution.
 """
 
 import asyncio
@@ -20,6 +20,8 @@ from .merge.result_fuser import ResultFuser
 from .ranking.ranker import Ranker
 from .validator.completeness_checker import CompletenessChecker
 from .validator.safety_checker import safety_checker
+from .validator.fact_checker import fact_checker
+from .providers.capabilities import get_best_provider
 from .config import settings
 
 logger = logging.getLogger(__name__)
@@ -29,6 +31,7 @@ logger = logging.getLogger(__name__)
 class OrchestrationRequest:
     prompt: str
     provider_ids: Optional[List[str]] = None
+    conversation_id: Optional[str] = None
     max_tokens: int = 4096
     temperature: float = 0.7
     strategy: str = "consensus"
@@ -59,60 +62,64 @@ class Orchestrator:
     
     async def orchestrate(self, request: OrchestrationRequest) -> OrchestrationResult:
         start_time = datetime.now()
-        # Analyze intent and plan
         intent = await intent_analyzer.analyze(request.prompt)
         plan = await task_planner.create_plan(request.prompt, intent.type)
         logger.info(f"Detected intent: {intent.type}, Complex: {plan.is_complex}")
 
         providers = self._get_providers(request.provider_ids)
-        
         if not providers:
             raise ValueError("No AI providers available")
         
-        logger.info(f"Orchestrating request with {len(providers)} providers")
-        
         responses = []
         errors = []
+        merged_result = None
         
         try:
-            # Parallel execution of subtasks or full prompt
             if plan.is_complex:
-                # For complex plans, we'll execute sequentially for now following dependencies
-                # This is a simplified implementation of the Task Splitter/Parallel workers architecture
-                plan_results = {}
-                for subtask in plan.subtasks:
-                    # In a real system, we would route based on subtask.intent_type
-                    # Here we just use the first available provider for simplicity in this version
-                    provider = providers[0]
-                    sub_response = await self._get_provider_response(provider, request, subtask.description)
-                    plan_results[subtask.id] = sub_response.get("content", "")
-                    responses.append(sub_response)
+                completed_tasks = {} # id -> content
+                pending_tasks = list(plan.subtasks)
 
-                # Merge subtask results
-                merged_result = "\n\n".join([f"## {st.description}\n{plan_results[st.id]}" for st in plan.subtasks])
+                while pending_tasks:
+                    ready_tasks = [t for t in pending_tasks if all(d in completed_tasks for d in t.dependencies)]
+                    if not ready_tasks:
+                        if pending_tasks: logger.error("Potential circular dependency or unmet requirements")
+                        break
+
+                    async def execute_subtask(task):
+                        provider = get_best_provider(task.intent_type, providers)
+                        context = "\n".join([f"Result of {st_id}: {content}" for st_id, content in completed_tasks.items() if st_id in task.dependencies])
+                        prompt = f"Previous Context:\n{context}\n\nCurrent Subtask: {task.description}"
+                        return task.id, await self._get_provider_response(provider, request, prompt)
+
+                    batch_results = await asyncio.gather(*[execute_subtask(t) for t in ready_tasks], return_exceptions=True)
+
+                    for result in batch_results:
+                        if isinstance(result, tuple):
+                            tid, res = result
+                            completed_tasks[tid] = res.get("content", "")
+                            responses.append(res)
+                        else:
+                            errors.append(str(result))
+
+                    ready_ids = [t.id for t in ready_tasks]
+                    pending_tasks = [t for t in pending_tasks if t.id not in ready_ids]
+
+                merged_result = "\n\n".join([f"### {st.description}\n{completed_tasks.get(st.id, 'Task failed.')}" for st in plan.subtasks])
             else:
-                tasks = []
-                for provider in providers:
-                    task = asyncio.create_task(self._get_provider_response(provider, request, request.prompt))
-                    tasks.append(task)
+                task_executions = [self._get_provider_response(p, request, request.prompt) for p in providers]
+                batch_results = await asyncio.gather(*task_executions, return_exceptions=True)
 
-                results = await asyncio.gather(*tasks, return_exceptions=True)
+                for result in batch_results:
+                    if isinstance(result, Exception): errors.append(str(result))
+                    elif result: responses.append(result)
 
-                for result in results:
-                    if isinstance(result, Exception):
-                        errors.append(str(result))
-                    elif result:
-                        responses.append(result)
-
-                # Ranking and Merging
                 if responses:
                     if request.enable_ranking and len(responses) > 1:
                         ranked_results = self.ranker.rank(responses)
-                        best_response = ranked_results[0] if ranked_results else None
+                        best_response = ranked_results[0]
 
                     if request.enable_merging and len(responses) > 1:
-                        contents = [r.get("content", "") for r in responses]
-                        merged_result = self.result_fuser.intelligent_fuse(contents)
+                        merged_result = self.result_fuser.intelligent_fuse([r.get("content", "") for r in responses])
                     elif request.enable_merging and len(responses) == 1:
                         merged_result = responses[0].get("content", "")
 
@@ -123,18 +130,11 @@ class Orchestrator:
         processing_time = (datetime.now() - start_time).total_seconds()
         
         if responses and request.enable_validation:
+            all_contents = [r.get("content", "") for r in responses]
             for response in responses:
                 self.completeness_checker.check(response)
                 safety_checker.check(response.get("content", ""))
-        
-        statistics = {
-            "total_providers": len(providers),
-            "successful_responses": len(responses),
-            "failed_responses": len(errors),
-            "strategy": request.strategy,
-            "intent": intent.type,
-            "is_complex": plan.is_complex
-        }
+                await fact_checker.check(response.get("content", ""), all_contents)
         
         return OrchestrationResult(
             query=request.prompt,
@@ -142,7 +142,7 @@ class Orchestrator:
             merged_result=merged_result,
             ranked_results=ranked_results if 'ranked_results' in locals() else None,
             best_response=best_response if 'best_response' in locals() else (responses[0] if responses else None),
-            statistics=statistics,
+            statistics={"total_providers": len(providers), "successful": len(responses), "failed": len(errors), "intent": intent.type, "is_complex": plan.is_complex},
             processing_time=processing_time,
             created_at=datetime.now().isoformat(),
         )
@@ -150,40 +150,33 @@ class Orchestrator:
     def _get_providers(self, provider_ids: Optional[List[str]] = None) -> List[Any]:
         if provider_ids:
             return [provider_registry.get_provider(pid) for pid in provider_ids if provider_registry.has_provider(pid)]
-        else:
-            return [p.provider for p in provider_registry.providers.values()]
+        return [p.provider for p in provider_registry.providers.values()]
     
     async def _get_provider_response(self, provider: Any, request: OrchestrationRequest, prompt: str) -> Dict[str, Any]:
         try:
-            response = await provider.generate(
-                prompt=prompt,
-                max_tokens=request.max_tokens,
-                temperature=request.temperature,
-            )
+            response = await provider.generate(prompt=prompt, max_tokens=request.max_tokens, temperature=request.temperature, conversation_id=request.conversation_id)
             return {
-                "provider_id": getattr(provider, "id", provider.name.lower()),
+                "provider_id": getattr(provider, "id", provider.name.lower().replace(" ", "_")),
                 "provider_name": provider.name,
                 "provider_type": provider.provider_type,
                 "content": response.text,
                 "model": response.model,
-                "tokens_used": response.tokens_prompt + response.tokens_completion,
+                "tokens": response.tokens_prompt + response.tokens_completion,
                 "finish_reason": response.finish_reason,
-                "generated_at": datetime.now().isoformat(),
-                "error": None,
+                "generated_at": datetime.now().isoformat()
             }
         except Exception as e:
-            logger.error(f"Error from provider {provider.name}: {e}")
+            logger.error(f"Error from {provider.name}: {e}")
             return {
-                "provider_id": getattr(provider, "id", provider.name.lower()),
+                "provider_id": getattr(provider, "id", provider.name.lower().replace(" ", "_")),
                 "provider_name": provider.name,
                 "provider_type": provider.provider_type,
                 "content": "",
                 "model": "unknown",
-                "tokens_used": 0,
+                "tokens": 0,
                 "finish_reason": "error",
-                "generated_at": datetime.now().isoformat(),
                 "error": str(e),
+                "generated_at": datetime.now().isoformat()
             }
 
-# Global orchestrator instance
 orchestrator = Orchestrator()

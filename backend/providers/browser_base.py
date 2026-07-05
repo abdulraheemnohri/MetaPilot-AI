@@ -38,7 +38,8 @@ class BrowserAIProvider(AIProvider):
         """
         Generate text using browser automation.
         """
-        # Default implementation delegates to chat
+        conversation_id = kwargs.get("conversation_id")
+
         chat_messages = []
         if system_prompt:
             chat_messages.append({"role": "system", "content": system_prompt})
@@ -73,8 +74,5 @@ class BrowserAIProvider(AIProvider):
         system_prompt: Optional[str] = None,
         **kwargs,
     ) -> AsyncGenerator[str, None]:
-        """
-        Stream generation (often difficult via browser, placeholder).
-        """
         response = await self.generate(prompt, model, system_prompt, **kwargs)
         yield response.text

@@ -30,7 +30,7 @@ class ClaudeBrowserProvider(BrowserAIProvider):
         """
         User-authorized login session reuse.
         """
-        async with self.browser_manager.get_page() as page:
+        async with self.browser_manager.get_page(conversation_id=kwargs.get("conversation_id")) as page:
             await page.goto(self.url)
             try:
                 await page.wait_for_selector("div[contenteditable='true']", timeout=5000)
@@ -49,7 +49,7 @@ class ClaudeBrowserProvider(BrowserAIProvider):
         """
         last_message = messages[-1]["content"]
 
-        async with self.browser_manager.get_page() as page:
+        async with self.browser_manager.get_page(conversation_id=kwargs.get("conversation_id")) as page:
             await page.goto(self.url)
 
             # Type message
