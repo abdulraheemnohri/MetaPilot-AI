@@ -146,7 +146,7 @@ class JSONExporter(Exporter):
 
 
 # Register with export manager
-def register_json_exporter(export_manager: ExportManager, config: Optional[ExportConfig] = None) -> None:
+def register_json_exporter(export_manager: Any, config: Optional[ExportConfig] = None) -> None:
     """Register the JSON exporter with an export manager."""
     exporter = JSONExporter(config)
     export_manager.register_exporter(ExportFormat.JSON, exporter)

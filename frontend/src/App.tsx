@@ -4,7 +4,7 @@ import { Header } from './components/Header';
 import { ChatPage } from './pages/ChatPage';
 import { KnowledgePage } from './pages/KnowledgePage';
 import { ProvidersPage } from './pages/ProvidersPage';
-import { PluginsPage } from './pages/PluginsPage';
+import PluginsPage from './pages/PluginsPage';
 import { TasksPage } from './pages/TasksPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
