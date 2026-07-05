@@ -22,9 +22,9 @@ class ExportFormat(Enum):
     """Supported export formats."""
     MARKDOWN = "markdown"
     JSON = "json"
+    CSV = "csv"
     HTML = "html"
     TEXT = "text"
-    CSV = "csv"
     PDF = "pdf"
     DOCX = "docx"
 

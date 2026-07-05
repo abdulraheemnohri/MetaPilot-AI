@@ -142,6 +142,7 @@ class MemorySystem:
             self._conversations[conversation_id] = []
         
         self._conversations[conversation_id].append(entry)
+        await self._trim_memory(conversation_id)
         
         # Trim memory if needed
         await self._trim_memory(conversation_id)

@@ -15,6 +15,8 @@ import uvicorn
 from .config import settings, get_settings
 from .database.connection import init_db, close_db
 from .api import ai_router, auth_router
+from .api import admin_router
+from .api import knowledge_router, export_router
 from .providers.registry import provider_registry
 from .api.auth_router import get_current_user
 
@@ -99,6 +101,9 @@ app.add_middleware(
 # Include API routers
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(ai_router, prefix="/api/ai", tags=["AI"])
+app.include_router(admin_router.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(knowledge_router.router, prefix="/api/knowledge", tags=["Knowledge"])
+app.include_router(export_router.router, prefix="/api/export", tags=["Export"])
 
 
 # Global exception handler

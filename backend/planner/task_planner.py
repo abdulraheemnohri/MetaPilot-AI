@@ -53,6 +53,14 @@ Respond only with a JSON object like: {{"is_complex": true, "subtasks": [{{"id":
                 logger.warning(f"Local AI planning failed: {e}")
 
         # Fallback to rule-based breakdown for common complex tasks
+        if "research" in prompt.lower() and len(prompt.split()) > 10:
+            subtasks = [
+                SubTask(id="st1", description=f"Broad research on {prompt}", intent_type="research"),
+                SubTask(id="st2", description=f"Extract specific key facts from research", intent_type="research", dependencies=["st1"]),
+                SubTask(id="st3", description=f"Synthesize final research report", intent_type="creative", dependencies=["st2"])
+            ]
+            return TaskPlan(original_prompt=prompt, subtasks=subtasks, is_complex=True)
+
         if "build" in prompt.lower() and ("app" in prompt.lower() or "website" in prompt.lower()):
             subtasks = [
                 SubTask(id="st1", description=f"Analyze requirements for {prompt}", intent_type="research"),

@@ -217,7 +217,7 @@ class MarkdownExporter(Exporter):
 
 
 # Register with export manager
-def register_markdown_exporter(export_manager: ExportManager, config: Optional[ExportConfig] = None) -> None:
+def register_markdown_exporter(export_manager: Any, config: Optional[ExportConfig] = None) -> None:
     """Register the Markdown exporter with an export manager."""
     exporter = MarkdownExporter(config)
     export_manager.register_exporter(ExportFormat.MARKDOWN, exporter)

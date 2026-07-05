@@ -71,4 +71,5 @@ mypy==1.8.0
 # Local AI Support (Optional)
 llama-cpp-python==0.2.7
 transformers==4.38.2
-torch>=2.2.0
+torch>=2.2.0psutil
+aiosqlite

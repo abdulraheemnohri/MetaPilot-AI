@@ -398,7 +398,7 @@ class HTMLExporter(Exporter):
 
 
 # Register with export manager
-def register_html_exporter(export_manager: ExportManager, config: Optional[ExportConfig] = None) -> None:
+def register_html_exporter(export_manager: Any, config: Optional[ExportConfig] = None) -> None:
     """Register the HTML exporter with an export manager."""
     exporter = HTMLExporter(config)
     export_manager.register_exporter(ExportFormat.HTML, exporter)
