@@ -1,14 +1,16 @@
 """
 Browser Manager for MetaPilot AI
 
-Manages headless browser instances for web scraping and browsing.
+Manages headless browser instances with session persistence and conversation pinning.
 """
 
 import asyncio
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -21,42 +23,39 @@ class BrowserConfig:
     user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) MetaPilot-AI/1.0"
     timeout: int = 30000
     max_concurrent: int = 5
-
-
-@dataclass
-class PageResult:
-    url: str
-    title: str
-    content: str
-    html: str
-    links: List[str]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    user_data_dir: str = "./cache/browser"
 
 
 class BrowserManager:
     def __init__(self, config: Optional[BrowserConfig] = None):
         self.config = config or BrowserConfig()
-        self._browser = None
-        self._contexts: Dict[str, Any] = {}
-        self._pages: Dict[str, Any] = {}
-        self._lock = asyncio.Lock()
+        self._playwright = None
         self._initialized = False
+        self._pages = {}
+        self._conversation_pages = {} # conversation_id -> page
+
+        # Ensure cache dir exists
+        Path(self.config.user_data_dir).mkdir(parents=True, exist_ok=True)
 
     async def initialize(self):
         if self._initialized:
             return
         try:
             from playwright.async_api import async_playwright
-            self._playwright = async_playwright()
-            self._browser = await self._playwright.chromium.launch(
+            self._playwright_context_manager = async_playwright()
+            self._playwright = await self._playwright_context_manager.start()
+
+            # Use launch_persistent_context for session reuse
+            self._browser_context = await self._playwright.chromium.launch_persistent_context(
+                user_data_dir=self.config.user_data_dir,
                 headless=self.config.headless,
-                args=[f"--window-size={self.config.width},{self.config.height}", "--disable-gpu", "--no-sandbox"],
+                viewport={"width": self.config.width, "height": self.config.height},
+                user_agent=self.config.user_agent,
+                args=["--disable-gpu", "--no-sandbox"]
             )
+
             self._initialized = True
-            logger.info("Browser manager initialized")
-        except ImportError:
-            logger.error("Playwright not installed. Install with: pip install playwright && playwright install")
-            raise
+            logger.info(f"Browser manager initialized with persistent context in {self.config.user_data_dir}")
         except Exception as e:
             logger.error(f"Error initializing browser: {e}")
             raise
@@ -65,79 +64,51 @@ class BrowserManager:
         if not self._initialized:
             return
         try:
-            for page_id, page in self._pages.items():
-                try:
-                    await page.close()
-                except:
-                    pass
-            for context_id, context in self._contexts.items():
-                try:
-                    await context.close()
-                except:
-                    pass
-            if self._browser:
-                await self._browser.close()
-            if hasattr(self, '_playwright'):
-                await self._playwright.stop()
+            for page in self._conversation_pages.values():
+                try: await page.close()
+                except: pass
+            if hasattr(self, '_browser_context'):
+                await self._browser_context.close()
+            if self._playwright:
+                await self._playwright_context_manager.__aexit__()
             self._initialized = False
             logger.info("Browser manager shutdown")
         except Exception as e:
             logger.error(f"Error shutting down browser: {e}")
 
     @asynccontextmanager
-    async def get_page(self, context_id: str = "default"):
+    async def get_page(self, conversation_id: Optional[str] = None):
         if not self._initialized:
             await self.initialize()
-        if context_id not in self._contexts:
-            self._contexts[context_id] = await self._browser.new_context(
-                viewport={"width": self.config.width, "height": self.config.height},
-                user_agent=self.config.user_agent,
-            )
-        context = self._contexts[context_id]
-        page = await context.new_page()
-        page_id = f"{context_id}-{len(self._pages)}"
+
+        if conversation_id and conversation_id in self._conversation_pages:
+            page = self._conversation_pages[conversation_id]
+            if not page.is_closed():
+                yield page
+                return
+
+        page = await self._browser_context.new_page()
+        if conversation_id:
+            self._conversation_pages[conversation_id] = page
+
+        page_id = f"{conversation_id or 'default'}-{id(page)}"
         self._pages[page_id] = page
         try:
             yield page
         finally:
-            try:
-                await page.close()
-            except:
-                pass
-            if page_id in self._pages:
-                del self._pages[page_id]
+            if not conversation_id:
+                try:
+                    await page.close()
+                except:
+                    pass
+                if page_id in self._pages:
+                    del self._pages[page_id]
 
-    async def browse(self, url: str, wait_until: str = "domcontentloaded") -> PageResult:
-        if not self._initialized:
-            await self.initialize()
-        async with self.get_page() as page:
-            try:
-                await page.goto(url, wait_until=wait_until, timeout=self.config.timeout)
-                title = await page.title()
-                html = await page.content()
-                content = await page.evaluate("() => document.body.innerText")
-                links = await page.evaluate("() => Array.from(document.querySelectorAll('a[href]')).map(a => a.href).filter(href => href && href.startsWith('http'))")
-                metadata = {"url": url, "title": title, "language": await page.evaluate("() => document.documentElement.lang"), "content_length": len(content), "html_length": len(html), "link_count": len(links)}
-                return PageResult(url=url, title=title, content=content, html=html, links=links, metadata=metadata)
-            except Exception as e:
-                logger.error(f"Error browsing {url}: {e}")
-                raise
-
-    async def screenshot(self, url: str, path: str, full_page: bool = False) -> str:
-        if not self._initialized:
-            await self.initialize()
-        async with self.get_page() as page:
-            await page.goto(url, wait_until="networkidle", timeout=self.config.timeout)
-            await page.screenshot(path=path, full_page=full_page)
-            return path
-
-    async def extract_text(self, url: str) -> str:
-        result = await self.browse(url)
-        return result.content
-
-    async def extract_links(self, url: str) -> List[str]:
-        result = await self.browse(url)
-        return result.links
-
+    async def close_conversation(self, conversation_id: str):
+        if conversation_id in self._conversation_pages:
+            page = self._conversation_pages[conversation_id]
+            try: await page.close()
+            except: pass
+            del self._conversation_pages[conversation_id]
 
 browser_manager = BrowserManager()

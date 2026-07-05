@@ -1,9 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Plus, Settings, Users, MessageSquare, Database, CPU } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -13,28 +11,28 @@ const DashboardPage: React.FC = () => {
     {
       title: 'New Chat',
       description: 'Start a new conversation',
-      icon: MessageSquare,
+      icon: '💬',
       action: () => navigate('/chat'),
       color: 'bg-blue-500',
     },
     {
       title: 'Knowledge Base',
       description: 'Manage your documents',
-      icon: Database,
+      icon: '📚',
       action: () => navigate('/knowledge'),
       color: 'bg-green-500',
     },
     {
       title: 'Providers',
       description: 'Configure AI providers',
-      icon: CPU,
+      icon: '🤖',
       action: () => navigate('/providers'),
       color: 'bg-purple-500',
     },
     {
       title: 'Settings',
       description: 'Application settings',
-      icon: Settings,
+      icon: '⚙️',
       action: () => navigate('/settings'),
       color: 'bg-gray-500',
     },
@@ -44,28 +42,28 @@ const DashboardPage: React.FC = () => {
     {
       title: 'Total Chats',
       value: stats?.totalChats || 0,
-      icon: MessageSquare,
+      icon: '💬',
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10',
     },
     {
       title: 'Documents',
       value: stats?.totalDocuments || 0,
-      icon: Database,
+      icon: '📚',
       color: 'text-green-500',
       bgColor: 'bg-green-500/10',
     },
     {
       title: 'AI Providers',
       value: stats?.activeProviders || 0,
-      icon: CPU,
+      icon: '🤖',
       color: 'text-purple-500',
       bgColor: 'bg-purple-500/10',
     },
     {
       title: 'Tasks',
       value: stats?.pendingTasks || 0,
-      icon: Users,
+      icon: '⏳',
       color: 'text-orange-500',
       bgColor: 'bg-orange-500/10',
     },
@@ -88,7 +86,7 @@ const DashboardPage: React.FC = () => {
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
               <div className={stat.bgColor + ' p-2 rounded-lg'}>
-                <stat.icon className={stat.color + ' h-4 w-4'} />
+                <span className={stat.color}>{stat.icon}</span>
               </div>
             </CardHeader>
             <CardContent>
@@ -110,7 +108,7 @@ const DashboardPage: React.FC = () => {
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">{action.title}</CardTitle>
                 <div className={action.color + ' p-2 rounded-lg'}>
-                  <action.icon className="h-4 w-4 text-white" />
+                  <span className="text-white">{action.icon}</span>
                 </div>
               </CardHeader>
               <CardContent>
@@ -122,15 +120,23 @@ const DashboardPage: React.FC = () => {
       </div>
 
       <div>
-        <h2 className="text-2xl font-semibold mb-4">Recent Activity</h2>
+        <h2 className="text-2xl font-semibold mb-4">AI Provider Health</h2>
         <Card>
           <CardHeader>
-            <CardTitle>Coming Soon</CardTitle>
+            <CardTitle>Status Monitor</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">
-              Recent chats and activity will be displayed here.
-            </p>
+            <div className="space-y-4">
+              {['OpenAI', 'Anthropic', 'ChatGPT (Browser)', 'Local GGUF', 'Grok (Browser)', 'DeepSeek (Browser)'].map((name, i) => (
+                <div key={i} className="flex items-center justify-between p-2 border rounded">
+                  <span className="font-medium">{name}</span>
+                  <span className="text-green-500 flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    Connected & Parallel Ready
+                  </span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -37,7 +37,7 @@ export function SettingsPage() {
                 <label className="block text-sm font-medium mb-2">Active Provider</label>
                 <Select
                   value={activeProvider}
-                  onValueChange={(value) => setActiveProvider(value)}
+                  onVolumeChange={(value) => setActiveProvider(value)}
                 >
                   {providers.map(provider => (
                     <option key={provider.id} value={provider.id}>

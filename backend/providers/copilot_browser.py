@@ -1,7 +1,7 @@
 """
-ChatGPT Browser Provider for MetaPilot AI
+Microsoft Copilot Browser Provider for MetaPilot AI
 
-Implementation of AIProvider for ChatGPT via browser automation.
+Implementation of AIProvider for Microsoft Copilot via browser automation.
 """
 
 import logging
@@ -14,30 +14,28 @@ from .browser_base import BrowserAIProvider
 logger = logging.getLogger(__name__)
 
 
-class ChatGPTBrowserProvider(BrowserAIProvider):
+class CopilotBrowserProvider(BrowserAIProvider):
     """
-    ChatGPT browser-based provider.
+    Microsoft Copilot browser-based provider.
     """
 
-    provider_type = ProviderType.LOCAL  # Using LOCAL as placeholder for browser-based
-    name = "ChatGPT (Browser)"
+    provider_type = ProviderType.LOCAL
+    name = "Copilot (Browser)"
 
     def __init__(self, config: Optional[Any] = None):
         super().__init__(config)
-        self.url = "https://chat.openai.com"
+        self.url = "https://copilot.microsoft.com"
 
     async def login(self) -> bool:
         """
         User-authorized login session reuse.
         """
-        async with self.browser_manager.get_page(conversation_id=kwargs.get("conversation_id")) as page:
+        async with self.browser_manager.get_page(conversation_id="login") as page:
             await page.goto(self.url)
-            # Check if logged in
             try:
-                await page.wait_for_selector("textarea", timeout=5000)
+                await page.wait_for_selector("#searchbox", timeout=5000)
                 return True
             except:
-                logger.warning("ChatGPT not logged in or taking too long to load")
                 return False
 
     async def chat(
@@ -55,22 +53,21 @@ class ChatGPTBrowserProvider(BrowserAIProvider):
             await page.goto(self.url)
 
             # Type message
-            await page.fill("textarea", last_message)
-            await page.press("textarea", "Enter")
+            await page.fill("#searchbox", last_message)
+            await page.press("#searchbox", "Enter")
 
-            # Wait for response (simplified)
-            await asyncio.sleep(5)
+            # Wait for response
+            await asyncio.sleep(8)
 
-            # Extract last response
-            responses = await page.query_selector_all(".markdown")
+            responses = await page.query_selector_all(".ac-textBlock")
             if responses:
-                text = await responses[-1].inner_text()
+                text = await responses[-1].evaluate("el => el.innerText")
             else:
                 text = "Error: Could not extract response"
 
             return ChatResponse(
                 text=text,
-                model=model or "chatgpt-browser",
+                model=model or "copilot-browser",
                 provider=self.name,
                 message=ChatMessage(role="assistant", content=text)
             )
